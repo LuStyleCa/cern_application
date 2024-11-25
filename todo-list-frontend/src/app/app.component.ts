@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 import {Todo, TodoService} from "./todo.service";
 import {Observable} from "rxjs";
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 
 
 @Component({
@@ -16,27 +16,32 @@ import { catchError, finalize } from 'rxjs/operators';
       <label for="search">Search...</label>
       <input id="search" type="text" [(ngModel)]="searchTerm" >
       <app-progress-bar *ngIf="loading"></app-progress-bar>
-      <app-todo-item *ngFor="let todo of todos$ | async | searchTodos : searchTerm" [item]="todo"></app-todo-item>
+      <app-todo-item *ngFor="let todo of todos$ | async | searchTodos : searchTerm" 
+        [item]="todo"
+        (click)="removeTask(todo.id)">
+      </app-todo-item>
     </div>
   `,
   styleUrls: ['app.component.scss']
 })
 export class AppComponent {
 
-  todos$: Observable<Todo[]>;
-  loading: boolean = true;
-
+  todos$: Observable<Todo[]> = this.todoService.getAll();
+  loading: boolean = false;
   searchTerm: string = '';
 
-  constructor(todoService: TodoService) {
-    this.todos$ = todoService.getAll().pipe(
+  constructor(private todoService: TodoService) {
+    this.todoService.loadingSubject.asObservable().subscribe(loading => {
+      this.loading = loading;
+    });
+  }
+
+  removeTask(taskId: number) {
+    this.todoService.remove(taskId).pipe(
       catchError(() => {
-        this.loading = false;
+        console.log("Removing todo failed by a stroke of bad luck, please try again.")
         return [];
       }),
-      finalize(() => {
-        this.loading = false;
-      })
-    );
+    ).subscribe();
   }
 }

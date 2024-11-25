@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable, of} from "rxjs";
+import {BehaviorSubject, Observable, of} from "rxjs";
 import {delay, map} from "rxjs/operators";
 
 export interface Todo {
@@ -24,21 +24,32 @@ function removeFromMockData(id: number) {
 })
 export class TodoService {
 
+  private todosSubject = new BehaviorSubject<Todo[]>(mockData);
+  loadingSubject = new BehaviorSubject<boolean>(false);
+
   getAll(): Observable<Todo[]> {
-    return of(undefined).pipe(delay(2_000), map(() => mockData));
+    this.loadingSubject.next(true);
+    return this.todosSubject.asObservable().pipe(
+      delay(2000),
+      map(data => {
+        this.loadingSubject.next(false);
+        return data;
+      })
+    );
   }
 
   remove(id: number): Observable<void> {
+    this.loadingSubject.next(true);
+
     return new Observable<void>(observer => {
-      setTimeout(() => {
-        if (Math.random() < .8) {
-          removeFromMockData(id);
-          observer.next();
-        } else {
-          observer.error('Failed');
-        }
-        observer.complete();
-      }, 2_000)
+      if (Math.random() < .8) {
+        removeFromMockData(id);
+        this.todosSubject.next(mockData);
+        observer.next();
+      } else {
+        observer.error('Failed');
+      }
+      observer.complete();
     })
   }
 }
