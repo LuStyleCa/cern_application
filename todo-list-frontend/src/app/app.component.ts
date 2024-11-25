@@ -3,6 +3,7 @@ import {Todo, TodoService} from "./todo.service";
 import {Observable} from "rxjs";
 import { catchError, finalize } from 'rxjs/operators';
 
+
 @Component({
   selector: 'app-root',
   template: `
@@ -13,9 +14,9 @@ import { catchError, finalize } from 'rxjs/operators';
     </div>
     <div class="list">
       <label for="search">Search...</label>
-      <input id="search" type="text">
+      <input id="search" type="text" [(ngModel)]="searchTerm" >
       <app-progress-bar *ngIf="loading"></app-progress-bar>
-      <app-todo-item *ngFor="let todo of todos$ | async" [item]="todo"></app-todo-item>
+      <app-todo-item *ngFor="let todo of todos$ | async | searchTodos : searchTerm" [item]="todo"></app-todo-item>
     </div>
   `,
   styleUrls: ['app.component.scss']
@@ -24,6 +25,8 @@ export class AppComponent {
 
   todos$: Observable<Todo[]>;
   loading: boolean = true;
+
+  searchTerm: string = '';
 
   constructor(todoService: TodoService) {
     this.todos$ = todoService.getAll().pipe(
