@@ -1,5 +1,6 @@
 import {Component} from '@angular/core';
-import {Todo, TodoService} from "./todo.service";
+import {TodoService} from "./todo.service";
+import { Todo } from './models/todo.model';
 import {Observable} from "rxjs";
 import { catchError } from 'rxjs/operators';
 
@@ -18,7 +19,7 @@ import { catchError } from 'rxjs/operators';
       <app-progress-bar *ngIf="loading"></app-progress-bar>
       <app-todo-item *ngFor="let todo of todos$ | async | searchTodos : searchTerm" 
         [item]="todo"
-        (click)="removeTask(todo.id)">
+        (click)="removeTodoById(todo.id)">
       </app-todo-item>
     </div>
   `,
@@ -26,7 +27,7 @@ import { catchError } from 'rxjs/operators';
 })
 export class AppComponent {
 
-  todos$: Observable<Todo[]> = this.todoService.getAll();
+  todos$: Observable<Todo[]> = this.todoService.todos$;
   loading: boolean = false;
   searchTerm: string = '';
 
@@ -34,14 +35,10 @@ export class AppComponent {
     this.todoService.loadingSubject.asObservable().subscribe(loading => {
       this.loading = loading;
     });
+    this.todoService.getAllTodos().subscribe();
   }
 
-  removeTask(taskId: number) {
-    this.todoService.remove(taskId).pipe(
-      catchError(() => {
-        console.log("Removing todo failed by a stroke of bad luck, please try again.")
-        return [];
-      }),
-    ).subscribe();
+  removeTodoById(todoId: number) {
+    this.todoService.remove(todoId).pipe().subscribe();
   }
 }
